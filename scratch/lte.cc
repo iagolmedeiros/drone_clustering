@@ -470,7 +470,7 @@ int main(int argc, char* argv[])
 	uint32_t numCars = 10;
     uint32_t seedValue = 10000;
     uint32_t SimTime = 85;
-    int eNodeBTxPower = 23;
+    int eNodeBTxPower = 15;
 
     uint16_t node_remote = 1; // HOST_REMOTO
     CommandLine cmd;
@@ -724,7 +724,7 @@ int main(int argc, char* argv[])
 	if(enablePrediction){
 		Simulator::Schedule(Seconds(1), &log_ue_positions, NodeContainer(ueNodes, carNodes), &ue_positions_log);
 	}
-    Simulator::Schedule(Seconds(1), &send_drones_to_cluster_centers, NodeContainer(ueNodes, carNodes), UAVNodes);
+    Simulator::Schedule(Seconds(2), &send_drones_to_cluster_centers, NodeContainer(ueNodes, carNodes), UAVNodes);
 
     // set initial positions of drones
     set_drones(UAVNodes);
