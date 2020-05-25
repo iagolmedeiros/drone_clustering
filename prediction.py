@@ -56,10 +56,10 @@ if args.error:
     mse_arima = []
     mse_kalman = []
 
-    for nodeN in range(1):
+    for nodeN in range(num_nodes):
         positions = nodes[nodeN]
         Xs = [p.x for p in positions]
-        size = math.ceil(len(Xs) * 0.33)
+        size = 10
         print('train initial size: {}'.format(size))
         train, test = Xs[:size], Xs[size+seconds_to_predict-1:]
         predictions_arima = []
