@@ -12,6 +12,8 @@ Ul*
 ouput*
 rd_*
 sd_*
+*.out
+*.png
 sem/
 results/
 /*txt

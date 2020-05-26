@@ -26,6 +26,8 @@
 #include "ns3/evalvid-client.h"
 #include "ns3/evalvid-server.h"
 
+//#include "ns3/gtk-config-store.h"
+
 #include <boost/algorithm/string/classification.hpp> // Include boost::for is_any_of
 #include <boost/algorithm/string/split.hpp> // Include for boost::split
 
@@ -471,6 +473,7 @@ int main(int argc, char* argv[])
     uint32_t seedValue = 10000;
     uint32_t SimTime = 85;
     int eNodeBTxPower = 15;
+	int remMode = 0;
 
     uint16_t node_remote = 1; // HOST_REMOTO
     CommandLine cmd;
@@ -494,6 +497,7 @@ int main(int argc, char* argv[])
     cmd.AddValue("seedValue", "random seed value.", seedValue);
 	cmd.AddValue("algo", "clustering algoritm to use", clustering_algoritm);
 	cmd.AddValue("enablePrediction", "Enable user movement prediction", enablePrediction);
+	cmd.AddValue("remMode","Radio environment map mode",remMode);
     cmd.Parse(argc, argv);
 
     ns3::RngSeedManager::SetSeed(seedValue); //valor de seed para geração de números aleatórios
@@ -733,6 +737,30 @@ int main(int argc, char* argv[])
     save_user_positions(NodeContainer(ueNodes, carNodes));
 
 	BuildingsHelper::MakeMobilityModelConsistent ();
+
+	Ptr<RadioEnvironmentMapHelper> remHelper = CreateObject<RadioEnvironmentMapHelper> ();
+	if (remMode > 0){
+		remHelper->SetAttribute ("ChannelPath", StringValue ("/ChannelList/3"));
+		remHelper->SetAttribute ("XMin", DoubleValue (-1000.0));
+		remHelper->SetAttribute ("XMax", DoubleValue (1000.0));
+		remHelper->SetAttribute ("XRes", UintegerValue (1000));
+		remHelper->SetAttribute ("YMin", DoubleValue (-1000.0));
+		remHelper->SetAttribute ("YMax", DoubleValue (1000.0));
+		remHelper->SetAttribute ("YRes", UintegerValue (1000));
+		remHelper->SetAttribute ("Z", DoubleValue (1.0));
+		remHelper->SetAttribute ("Bandwidth", UintegerValue (100));
+		if(remMode == 1){
+			remHelper->SetAttribute ("OutputFile", StringValue ("rem-start.out"));
+			Simulator::Schedule (Seconds (1.0),&RadioEnvironmentMapHelper::Install,remHelper);
+		} else {
+			remHelper->SetAttribute ("StopWhenDone", BooleanValue (false));
+			remHelper->SetAttribute ("OutputFile", StringValue ("rem-end.out"));
+			Simulator::Schedule (Seconds (SimTime-0.06),&RadioEnvironmentMapHelper::Install,remHelper);
+		}
+	}
+
+	//GtkConfigStore configstore;
+	//configstore.ConfigureAttributes();
 
     Simulator::Run();
     flowMonitor->SerializeToXmlFile("lte_flow_monitor.xml", true, true);
