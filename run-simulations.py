@@ -20,6 +20,7 @@ param_combinations = {
     'enablePrediction' : 'true',
     'numUAVs' : 3,
     'numUes' : 75,
+    'remMode' : 0,
     'seedValue' : 10000,
     'useCa' : 'false'
 }
