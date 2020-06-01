@@ -281,7 +281,7 @@ void send_drones_to_cluster_centers(NodeContainer nodes, NodeContainer drones) {
     }
 
     // repeat
-    Simulator::Schedule(Seconds(1), &send_drones_to_cluster_centers, nodes, drones);
+    Simulator::Schedule(Seconds(5), &send_drones_to_cluster_centers, nodes, drones);
 }
 
 // initialize drones position
@@ -468,12 +468,12 @@ int main(int argc, char* argv[])
 {
     bool useCa = false;
     uint32_t numUAVs = 3;
-    uint32_t numUes = 75;
-	uint32_t numCars = 10;
+    uint32_t numUes = 45;
+	  uint32_t numCars = 45;
     uint32_t seedValue = 10000;
     uint32_t SimTime = 85;
     int eNodeBTxPower = 15;
-	int remMode = 0;
+	  int remMode = 0;
 
     uint16_t node_remote = 1; // HOST_REMOTO
     CommandLine cmd;
@@ -640,7 +640,7 @@ int main(int argc, char* argv[])
 	lteHelper->Attach(carDevs);
 
     Config::SetDefault("ns3::LteEnbPhy::TxPower", DoubleValue(eNodeBTxPower));
-    Config::SetDefault("ns3::LteEnbPhy::NoiseFigure", DoubleValue(5)); // Default 5
+    Config::SetDefault("ns3::LteEnbPhy::NoiseFigure", DoubleValue(9)); // Default 5
 
 	for (uint32_t u = 0; u < UAVNodes.GetN(); ++u) {
         Ptr<Node> UAVNode = UAVNodes.Get(u);
@@ -656,8 +656,8 @@ int main(int argc, char* argv[])
 
 	//*********** CONFIGURAÇÃO LTE ***************//
 	    // Bandwidth of Dl and Ul in Resource Blocks
-	    Config::SetDefault("ns3::LteEnbNetDevice::DlBandwidth", UintegerValue(25));
-	    Config::SetDefault("ns3::LteEnbNetDevice::UlBandwidth", UintegerValue(25));
+	    //Config::SetDefault("ns3::LteEnbNetDevice::DlBandwidth", UintegerValue(25));
+	    //Config::SetDefault("ns3::LteEnbNetDevice::UlBandwidth", UintegerValue(25));
 
 	    // Modo de transmissão (SISO [0], MIMO [1])
 	    Config::SetDefault("ns3::LteEnbRrc::DefaultTransmissionMode",
@@ -728,7 +728,7 @@ int main(int argc, char* argv[])
 	if(enablePrediction){
 		Simulator::Schedule(Seconds(1), &log_ue_positions, NodeContainer(ueNodes, carNodes), &ue_positions_log);
 	}
-    Simulator::Schedule(Seconds(2), &send_drones_to_cluster_centers, NodeContainer(ueNodes, carNodes), UAVNodes);
+    Simulator::Schedule(Seconds(5), &send_drones_to_cluster_centers, NodeContainer(ueNodes, carNodes), UAVNodes);
 
     // set initial positions of drones
     set_drones(UAVNodes);
