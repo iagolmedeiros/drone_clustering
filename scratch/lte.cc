@@ -314,7 +314,7 @@ void ThroughputMonitor(FlowMonitorHelper* fmhelper, Ptr<FlowMonitor> flowMon)
 {
     flowMon->CheckForLostPackets();
     uint32_t LostPacketsum = 0;
-	float PDR, PLR, Delay, Throughput;
+	float PDR, PLR, Delay, Jitter, Throughput;
     std::map<FlowId, FlowMonitor::FlowStats> flowStats = flowMon->GetFlowStats();
     Ptr<Ipv4FlowClassifier> classing = DynamicCast<Ipv4FlowClassifier>(fmhelper->GetClassifier());
 	std::ofstream qos_file;
@@ -325,7 +325,8 @@ void ThroughputMonitor(FlowMonitorHelper* fmhelper, Ptr<FlowMonitor> flowMon)
 		PDR = (100 * stats->second.rxPackets) / (stats->second.txPackets);
         LostPacketsum = (stats->second.txPackets) - (stats->second.rxPackets);
 		PLR = ((LostPacketsum * 100) / stats->second.txPackets);
-		Delay = (stats->second.delaySum.GetSeconds()) / (stats->second.txPackets);
+		Delay = (stats->second.delaySum.GetSeconds()) / (stats->second.rxPackets);
+		Jitter = stats->second.jitterSum.GetSeconds() / (stats->second.rxPackets);
 		Throughput = stats->second.rxBytes * 8.0 / (stats->second.timeLastRxPacket.GetSeconds() - stats->second.timeFirstTxPacket.GetSeconds()) / 1024 / 1024;
 
         std::cout << "Flow ID			: " << stats->first << " ; " << fiveTuple.sourceAddress << " -----> " << fiveTuple.destinationAddress << std::endl;
@@ -335,11 +336,12 @@ void ThroughputMonitor(FlowMonitorHelper* fmhelper, Ptr<FlowMonitor> flowMon)
         std::cout << "Packets Delivery Ratio (PDR) = " << PDR << "%" << std::endl;
         std::cout << "Packets Lost Ratio (PLR) = " << PLR << "%" << std::endl;
         std::cout << "Delay = " << Delay << " Seconds" << std::endl;
+		std::cout << "Jitter = " << Jitter << " Seconds" << std::endl;
         std::cout << "Total Duration		: " << stats->second.timeLastRxPacket.GetSeconds() - stats->second.timeFirstTxPacket.GetSeconds() << " Seconds" << std::endl;
         std::cout << "Last Received Packet	: " << stats->second.timeLastRxPacket.GetSeconds() << " Seconds" << std::endl;
         std::cout << "Throughput: " << Throughput << " Mbps" << std::endl;
         std::cout << "---------------------------------------------------------------------------" << std::endl;
-		qos_file << fiveTuple.sourceAddress << " --> " << fiveTuple.destinationAddress << "," << PDR << "," << PLR << "," << Delay << "," << Throughput << "\n";
+		qos_file << fiveTuple.sourceAddress << " --> " << fiveTuple.destinationAddress << "," << PDR << "," << PLR << "," << Delay << "," << Jitter << "," << Throughput << "\n";
     }
 
 	qos_file.close();
