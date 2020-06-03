@@ -477,7 +477,7 @@ int main(int argc, char* argv[])
     int eNodeBTxPower = 15;
 	  int remMode = 0;
 
-    uint16_t node_remote = 1; // HOST_REMOTO
+    uint16_t node_remote = 2; // HOST_REMOTO
     CommandLine cmd;
     std::stringstream cmm;
     std::string GetClusterCoordinates;
@@ -531,28 +531,40 @@ int main(int argc, char* argv[])
 	NodeContainer remoteHostContainer;
     remoteHostContainer.Create(node_remote);
     Ptr<Node> remoteHost = remoteHostContainer.Get(0);
+	Ptr<Node> controlStation = remoteHostContainer.Get(1);
 
     InternetStackHelper internet;
     internet.Install(remoteHostContainer);
 
-    PointToPointHelper p2ph;
+	PointToPointHelper p2ph;
     p2ph.SetDeviceAttribute("DataRate", DataRateValue(DataRate("100Gb/s")));
     p2ph.SetDeviceAttribute("Mtu", UintegerValue(1400));
     p2ph.SetChannelAttribute("Delay", TimeValue(Seconds(0.010)));
     //p2ph.EnablePcapAll("zob");
     NetDeviceContainer internetDevices = p2ph.Install(pgw, remoteHost);
 
+	Ptr<RateErrorModel> errorModel = CreateObject<RateErrorModel>();
+	errorModel->SetAttribute("ErrorRate", DoubleValue(0.1));
+	errorModel->SetAttribute("ErrorUnit", EnumValue(RateErrorModel::ErrorUnit::ERROR_UNIT_PACKET));
+	p2ph.SetDeviceAttribute("ReceiveErrorModel", PointerValue(errorModel));
+	internetDevices.Add(p2ph.Install(pgw, controlStation));
+
     Ipv4AddressHelper ipv4h;
     ipv4h.SetBase("1.0.0.0", "255.0.0.0");
     Ipv4InterfaceContainer internetIpIfaces;
     internetIpIfaces = ipv4h.Assign(internetDevices);
 
-    Ipv4Address remoteHostAddr;
-    remoteHostAddr = internetIpIfaces.GetAddress(1);
     Ipv4StaticRoutingHelper ipv4RoutingHelper;
+    
+	Ipv4Address remoteHostAddr;
+    remoteHostAddr = internetIpIfaces.GetAddress(1);
     Ptr<Ipv4StaticRouting> remoteHostStaticRouting = ipv4RoutingHelper.GetStaticRouting(remoteHost->GetObject<Ipv4>());
     remoteHostStaticRouting->AddNetworkRouteTo(Ipv4Address("7.0.0.0"), Ipv4Mask("255.0.0.0"), 1);
-	remoteHostStaticRouting->AddNetworkRouteTo(Ipv4Address("10.0.0.0"), Ipv4Mask("255.255.255.192"), 1); //Route to UAVs
+
+	Ipv4Address controlStationAddr;
+	controlStationAddr = internetIpIfaces.GetAddress(3);
+	Ptr<Ipv4StaticRouting> controlStationStaticRouting = ipv4RoutingHelper.GetStaticRouting(controlStation->GetObject<Ipv4>());
+	controlStationStaticRouting->AddNetworkRouteTo(Ipv4Address("10.0.0.0"), Ipv4Mask("255.255.255.192"), 1); //Route to UAVs
 
 	Ptr<Ipv4StaticRouting> pgwStaticRouting = ipv4RoutingHelper.GetStaticRouting(pgw->GetObject<Ipv4>());
 	pgwStaticRouting->AddNetworkRouteTo(Ipv4Address("10.0.0.0"), Ipv4Mask("255.255.255.192"), 2);
@@ -670,7 +682,7 @@ int main(int argc, char* argv[])
 			UDPApp(remoteHost, NodeContainer(ueNodes, carNodes));
 
     for (uint32_t i = 0; i < UAVNodes.GetN(); ++i) {
-        request_video(UAVNodes.Get(i), remoteHost);
+        request_video(UAVNodes.Get(i), controlStation);
     }
 
     AnimationInterface animator("lte.xml");
@@ -690,8 +702,9 @@ int main(int argc, char* argv[])
 		animator.UpdateNodeColor(carNodes.Get(j), 20, 100, 145);
 		animator.UpdateNodeSize(carNodes.Get(j)->GetId(),10,10);
 	}
+    animator.UpdateNodeDescription(remoteHostContainer.Get(0), "RemoteHost");
+	animator.UpdateNodeDescription(remoteHostContainer.Get(1), "ControlStation");
     for (uint32_t k = 0; k < remoteHostContainer.GetN(); ++k) {
-        animator.UpdateNodeDescription(remoteHostContainer.Get(k), "RemoteHost " + std::to_string(k));
         animator.UpdateNodeColor(remoteHostContainer.Get(k), 110, 150, 45);
 		animator.UpdateNodeSize(remoteHostContainer.Get(k)->GetId(),10,10);
     }
@@ -715,6 +728,7 @@ int main(int argc, char* argv[])
     Ptr<FlowMonitor> flowMonitor;
     FlowMonitorHelper flowHelper;
 	flowHelper.Install(remoteHost);
+	flowHelper.Install(controlStation);
 	flowHelper.Install(UAVNodes);
     flowHelper.Install(ueNodes);
 	flowMonitor = flowHelper.Install(carNodes);
